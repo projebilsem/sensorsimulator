@@ -3,66 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Akıllı Toprak Sensör Simülatörü</title>
+    <title>Dijital İkiz için Toprak Sensör Paneli - Neon Edition</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React ve ReactDOM CDN -->
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <!-- Babel CDN (JSX kodlarını tarayıcıda çalıştırmak için) -->
+    <!-- Babel CDN -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        /* Neon Kaydırma Çubukları İçin Özel CSS */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        /* Track (Yol) Tasarımı */
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            background: #1e293b; /* Dark slate */
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Thumb (Tutamaç) Tasarımı ve Neon Efekti */
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
-            background: white;
-            border: 2px solid currentColor;
+            height: 22px;
+            width: 22px;
+            background: #fff;
             border-radius: 50%;
-            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
+            transition: all 0.2s ease;
+            border: 2px solid #fff;
+        }
+
+        /* Hover Durumu */
+        input[type="range"]:hover::-webkit-slider-thumb {
+            transform: scale(1.2);
+            box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+        }
+
+        /* Farklı Sensörler İçin Neon Renkleri */
+        .neon-blue { color: #38bdf8; }   /* Nem */
+        .neon-orange { color: #fb923c; } /* Sıcaklık */
+        .neon-green { color: #4ade80; }  /* Besin */
+
+        /* Kartlardaki cam efekti (Glassmorphism) */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-slate-50 text-slate-900 min-h-screen">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // İkon Bileşenleri (Basit SVG halleri)
         const Icon = ({ name, className }) => {
             useEffect(() => {
-                lucide.createIcons();
+                if (window.lucide) lucide.createIcons();
             }, [name]);
             return <i data-lucide={name} className={className}></i>;
         };
 
         const App = () => {
             const [moisture, setMoisture] = useState(45);
-            const [temperature, setTemperature] = useState(20);
+            const [temperature, setTemperature] = useState(9); // Başlangıç değeri 9 yapıldı
             const [ec, setEc] = useState(1.2);
 
+            // Nem Durumu Analizi
             const getMoistureStatus = (val) => {
-                if (val < 20) return { label: 'Kritik: Çok Kuru', color: 'text-red-500', bg: 'bg-red-50', icon: 'alert-triangle' };
-                if (val <= 70) return { label: 'İdeal Nem Seviyesi', color: 'text-green-600', bg: 'bg-green-50', icon: 'check-circle' };
-                return { label: 'Aşırı Islak', color: 'text-blue-500', bg: 'bg-blue-50', icon: 'info' };
+                if (val < 20) return { label: 'Kritik: Çok Kuru', color: 'text-red-500', icon: 'alert-triangle' };
+                if (val <= 70) return { label: 'İdeal Nem Seviyesi', color: 'text-sky-500', icon: 'check-circle' };
+                return { label: 'Aşırı Islak', color: 'text-blue-600', icon: 'info' };
             };
 
+            // Sıcaklık Durumu Analizi (GÜNCELLENDİ: 8-18 arası Serin ama Normal)
             const getTempStatus = (val) => {
-                if (val < 8) return { label: 'Çok Soğuk', color: 'text-blue-600', bg: 'bg-blue-50' };
-                if (val >= 10 && val <= 18) return { label: 'Serin ama Normal', color: 'text-cyan-600', bg: 'bg-cyan-50' };
-                if (val >= 8 && val <= 28) return { label: 'İyi Sıcaklık', color: 'text-green-600', bg: 'bg-green-50' };
-                return { label: 'Çok Sıcak', color: 'text-orange-500', bg: 'bg-orange-50' };
+                if (val < 8) return { label: 'Çok Soğuk', color: 'text-indigo-600' };
+                if (val >= 8 && val <= 18) return { label: 'Serin ama Normal', color: 'text-cyan-500' };
+                if (val > 18 && val <= 28) return { label: 'İyi Sıcaklık', color: 'text-green-500' };
+                return { label: 'Çok Sıcak', color: 'text-orange-500' };
             };
 
+            // EC (Besin) Durumu Analizi
             const getEcStatus = (val) => {
-                if (val < 0.3) return { label: 'Çok Düşük Besin', color: 'text-red-400', bg: 'bg-red-50' };
-                if (val <= 0.8) return { label: 'Orta Seviye Besin', color: 'text-yellow-600', bg: 'bg-yellow-50' };
-                if (val <= 2.0) return { label: 'İyi Besin Seviyesi', color: 'text-green-600', bg: 'bg-green-50' };
-                return { label: 'Yüksek Tuzluluk Riski', color: 'text-purple-600', bg: 'bg-purple-50' };
+                if (val < 0.3) return { label: 'Çok Düşük Besin', color: 'text-rose-400' };
+                if (val <= 0.8) return { label: 'Orta Seviye Besin', color: 'text-amber-500' };
+                if (val <= 2.0) return { label: 'İyi Besin Seviyesi', color: 'text-emerald-500' };
+                return { label: 'Yüksek Tuzluluk', color: 'text-purple-600' };
             };
 
             const mInfo = getMoistureStatus(moisture);
@@ -70,79 +110,121 @@
             const eInfo = getEcStatus(ec);
 
             return (
-                <div className="min-h-screen p-4 md:p-8">
-                    <div className="max-w-4xl mx-auto">
-                        <header className="mb-8 text-center">
-                            <h1 className="text-3xl font-bold text-gray-800 mb-2">Akıllı Toprak Sensör Simülatörü</h1>
-                            <p className="text-gray-600">Değerleri değiştirerek durumu anlık takip edin.</p>
+                <div className="p-4 md:p-12 flex items-center justify-center min-h-screen">
+                    <div className="max-w-5xl w-full">
+                        <header className="mb-12 text-center">
+                            <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-3">AKILLI TARIM <span className="text-indigo-600">SENSÖR PANELİ</span></h1>
+                            <p className="text-slate-500 font-medium">Modern Veri Simülasyon Arayüzü</p>
                         </header>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
                             {/* Nem Kartı */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="flex items-center justify-between mb-4 text-blue-600">
-                                    <Icon name="droplets" className="w-6 h-6" />
-                                    <span className="text-sm font-bold bg-blue-50 px-2 py-1 rounded">%{moisture}</span>
+                            <div className="glass-card rounded-[2.5rem] p-8 shadow-xl shadow-blue-100/50 transition-all hover:translate-y-[-4px]">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="p-4 bg-blue-500 text-white rounded-2xl shadow-lg shadow-blue-200">
+                                        <Icon name="droplets" className="w-7 h-7" />
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-3xl font-black text-blue-600">%{moisture}</span>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">NEM ORANI</p>
+                                    </div>
                                 </div>
-                                <h3 className="font-semibold text-gray-700">Toprak Nemi</h3>
-                                <p className="text-xs text-gray-500 mb-4">İdeal: %20 – %70</p>
-                                <input 
-                                    type="range" min="0" max="100" value={moisture} 
-                                    onChange={(e) => setMoisture(parseInt(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-4"
-                                />
-                                <div className={`flex items-center gap-2 text-sm font-bold ${mInfo.color}`}>
+                                <h3 className="text-xl font-bold text-slate-800 mb-1">Toprak Nemi</h3>
+                                <p className="text-sm text-slate-400 mb-8 tracking-tighter">İdeal Aralık: %20 – %70</p>
+                                
+                                <div className="mb-8 neon-blue">
+                                    <input 
+                                        type="range" min="0" max="100" value={moisture} 
+                                        onChange={(e) => setMoisture(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-slate-100 font-bold text-xs ${mInfo.color}`}>
                                     <Icon name={mInfo.icon} className="w-4 h-4" />
                                     {mInfo.label}
                                 </div>
                             </div>
 
                             {/* Sıcaklık Kartı */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="flex items-center justify-between mb-4 text-orange-600">
-                                    <Icon name="thermometer" className="w-6 h-6" />
-                                    <span className="text-sm font-bold bg-orange-50 px-2 py-1 rounded">{temperature}°C</span>
+                            <div className="glass-card rounded-[2.5rem] p-8 shadow-xl shadow-orange-100/50 transition-all hover:translate-y-[-4px]">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="p-4 bg-orange-500 text-white rounded-2xl shadow-lg shadow-orange-200">
+                                        <Icon name="thermometer" className="w-7 h-7" />
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-3xl font-black text-orange-600">{temperature}°C</span>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">SICAKLIK</p>
+                                    </div>
                                 </div>
-                                <h3 className="font-semibold text-gray-700">Toprak Sıcaklığı</h3>
-                                <p className="text-xs text-gray-500 mb-4">İyi: 8 – 28 °C</p>
-                                <input 
-                                    type="range" min="0" max="45" value={temperature} 
-                                    onChange={(e) => setTemperature(parseInt(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-orange-500 mb-4"
-                                />
-                                <div className={`text-sm font-bold ${tInfo.color}`}>{tInfo.label}</div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-1">Toprak Sıcaklığı</h3>
+                                <p className="text-sm text-slate-400 mb-8 tracking-tighter">İdeal Aralık: 8 – 28 °C</p>
+                                
+                                <div className="mb-8 neon-orange">
+                                    <input 
+                                        type="range" min="0" max="45" value={temperature} 
+                                        onChange={(e) => setTemperature(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-slate-100 font-bold text-xs ${tInfo.color}`}>
+                                    <div className={`w-2 h-2 rounded-full bg-current shadow-[0_0_8px_currentColor]`}></div>
+                                    {tInfo.label}
+                                </div>
                             </div>
 
                             {/* EC Kartı */}
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <div className="flex items-center justify-between mb-4 text-green-600">
-                                    <Icon name="leaf" className="w-6 h-6" />
-                                    <span className="text-sm font-bold bg-green-50 px-2 py-1 rounded">{ec}</span>
+                            <div className="glass-card rounded-[2.5rem] p-8 shadow-xl shadow-green-100/50 transition-all hover:translate-y-[-4px]">
+                                <div className="flex justify-between items-start mb-8">
+                                    <div className="p-4 bg-emerald-500 text-white rounded-2xl shadow-lg shadow-emerald-200">
+                                        <Icon name="leaf" className="w-7 h-7" />
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-3xl font-black text-emerald-600">{ec}</span>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">BESİN (EC)</p>
+                                    </div>
                                 </div>
-                                <h3 className="font-semibold text-gray-700">EC (Besin)</h3>
-                                <p className="text-xs text-gray-500 mb-4">İyi: 0.8 – 2.0</p>
-                                <input 
-                                    type="range" min="0" max="3" step="0.1" value={ec} 
-                                    onChange={(e) => setEc(parseFloat(e.target.value))}
-                                    className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600 mb-4"
-                                />
-                                <div className={`text-sm font-bold ${eInfo.color}`}>{eInfo.label}</div>
+                                <h3 className="text-xl font-bold text-slate-800 mb-1">Besin Seviyesi</h3>
+                                <p className="text-sm text-slate-400 mb-8 tracking-tighter">İdeal Aralık: 0.8 – 2.0</p>
+                                
+                                <div className="mb-8 neon-green">
+                                    <input 
+                                        type="range" min="0" max="3" step="0.1" value={ec} 
+                                        onChange={(e) => setEc(parseFloat(e.target.value))}
+                                    />
+                                </div>
+                                
+                                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white shadow-sm border border-slate-100 font-bold text-xs ${eInfo.color}`}>
+                                    <div className={`w-2 h-2 rounded-full bg-current shadow-[0_0_8px_currentColor]`}></div>
+                                    {eInfo.label}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Rapor Paneli */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-lg font-bold text-gray-800 mb-4">Analiz ve Otomasyon</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className={`p-4 rounded-xl border ${moisture < 20 ? 'bg-red-50 border-red-100' : 'bg-gray-50 border-gray-100'}`}>
-                                    <p className="text-sm text-gray-700">
-                                        {moisture < 20 ? "⚠️ Kritik nem! Sulama başlatıldı." : "✅ Nem seviyesi kontrol altında."}
-                                    </p>
+                        {/* Sistem Durum Özeti */}
+                        <div className="bg-slate-900 rounded-[2rem] p-8 text-white flex flex-col md:flex-row items-center gap-8 shadow-2xl">
+                            <div className="flex-1 text-center md:text-left">
+                                <h2 className="text-2xl font-bold mb-2 flex items-center justify-center md:justify-start gap-3">
+                                    <span className="relative flex h-3 w-3">
+                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                    </span>
+                                    Sistem Tanılama
+                                </h2>
+                                <p className="text-slate-400 text-sm leading-relaxed">
+                                    {moisture < 20 ? "Kritik nem düşüklüğü! Pompa sistemi otomatik olarak %100 kapasiteye alındı. " : ""}
+                                    {temperature >= 8 && temperature <= 18 ? "Sıcaklık serin seyrediyor, bitki metabolizması yavaşlayabilir ancak normal sınırlar içindedir. " : ""}
+                                    {ec < 0.3 ? "Toprakta besin yetersizliği saptandı. Tanklardan dozajlama yapılması önerilir." : "Sistem stabil, tüm değerler operasyonel sınırlar içerisinde."}
+                                </p>
+                            </div>
+                            <div className="h-px w-full md:h-16 md:w-px bg-slate-800"></div>
+                            <div className="flex gap-4">
+                                <div className="text-center px-4">
+                                    <div className={`text-xl font-black ${moisture < 20 ? 'text-red-400' : 'text-emerald-400'}`}>{moisture < 20 ? 'AKTİF' : 'BEKLEMEDE'}</div>
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">SULAMA</div>
                                 </div>
-                                <div className={`p-4 rounded-xl border ${ec < 0.3 ? 'bg-yellow-50 border-yellow-100' : 'bg-gray-50 border-gray-100'}`}>
-                                    <p className="text-sm text-gray-700">
-                                        {ec < 0.3 ? "⚡ Besin düşük! Gübreleme önerilir." : "🌱 Besin dengesi yerinde."}
-                                    </p>
+                                <div className="text-center px-4 border-l border-slate-800">
+                                    <div className={`text-xl font-black ${ec < 0.3 ? 'text-amber-400' : 'text-emerald-400'}`}>{ec < 0.3 ? 'AKTİF' : 'BEKLEMEDE'}</div>
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">GÜBRELEME</div>
                                 </div>
                             </div>
                         </div>
