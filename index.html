@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dijital İkiz için Toprak Sensör Paneli - Neon Edition</title>
+    <title>Toprak Sensör Simülatörü - Neon Edition</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- React ve ReactDOM CDN -->
@@ -79,7 +79,7 @@
 
         const App = () => {
             const [moisture, setMoisture] = useState(45);
-            const [temperature, setTemperature] = useState(9); // Başlangıç değeri 9 yapıldı
+            const [temperature, setTemperature] = useState(9); 
             const [ec, setEc] = useState(1.2);
 
             // Nem Durumu Analizi
@@ -89,7 +89,7 @@
                 return { label: 'Aşırı Islak', color: 'text-blue-600', icon: 'info' };
             };
 
-            // Sıcaklık Durumu Analizi (GÜNCELLENDİ: 8-18 arası Serin ama Normal)
+            // Sıcaklık Durumu Analizi (8-18 arası Serin ama Normal)
             const getTempStatus = (val) => {
                 if (val < 8) return { label: 'Çok Soğuk', color: 'text-indigo-600' };
                 if (val >= 8 && val <= 18) return { label: 'Serin ama Normal', color: 'text-cyan-500' };
@@ -113,7 +113,7 @@
                 <div className="p-4 md:p-12 flex items-center justify-center min-h-screen">
                     <div className="max-w-5xl w-full">
                         <header className="mb-12 text-center">
-                            <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-3">AKILLI TARIM <span className="text-indigo-600">SENSÖR PANELİ</span></h1>
+                            <h1 className="text-4xl font-black text-slate-800 tracking-tight mb-3 uppercase">TOPRAK SENSÖR <span className="text-indigo-600">SİMÜLATÖRÜ</span></h1>
                             <p className="text-slate-500 font-medium">Modern Veri Simülasyon Arayüzü</p>
                         </header>
 
